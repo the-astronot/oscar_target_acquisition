@@ -1,7 +1,5 @@
-# oscar
+# OSCAR Target Acquisition
 
-## Purpose: lorum ipsum dolor sit met
+## Purpose
 
-## Author(s): Max Marshall   
-
-## Contact: maxtmarshall99@gmail.com
+Piece of software for OSCAR project @ RPI, a cubesat to clean debris from orbit around the Earth. This piece of the software determines whether light sources are stars or debris.
