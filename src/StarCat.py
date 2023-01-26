@@ -3,10 +3,11 @@ ________________
 |_File_History_|________________________________________________________________
 |_Programmer______|_Date_______|_Comments_______________________________________
 | Max Marshall    | 2023-01-24 | Created File
-|
+| Max Marshall    | 2023-01-25 | Added radii and fixed hash logic
 |
 |
 """
+import random
 
 
 class Star:
@@ -15,18 +16,33 @@ class Star:
 		self.ra = ra
 		self.decl = decl
 		self.mag = mag
+		# I don't have enough info on radii, but I need the number,
+		# and the overall starfield doesn;t need to be accurate,
+		# just generally an approximation, so I am randomly assigning radii
+		self.radius = random.normalvariate(.0010,.0003)
 
 	def __str__(self):
-		return "[STAR {0:04d}] -> [{1:.3f},{2:.3f},{3:.3f}]".format(self.id,self.ra,self.decl,self.mag)
+		return "[STAR {0:04d}] -> [{1:.3f},{2:.3f},{3:.2f},{4:.4f}]".format(self.id,self.ra,self.decl,self.mag,self.radius)
+
+	def __repr__(self):
+		return str(self)
 
 
 class StarCat:
-	def __init__(self, catalog):
+	def __init__(self, catalog,dRa=5,dDe=5):
+		"""
+		Initializes Star Catalog.
+
+		Inputs:
+			- catalog -> (String) Catalog file name
+			- dRA -> (Int) width of area in grid (360%dRA must be 0)
+			- dDe -> (Int) height of area in grid (180%dDe must be 0)
+		"""
 		self.catalog = catalog
 		self.stars = {}
 		self.num_stars = 0
-		self.deltaRA = 5
-		self.deltaDecl = 5
+		self.deltaRA = dRa
+		self.deltaDecl = dDe
 		self.max_hash = int(self.get_hash(Star(360,-90,0,0)))
 		self.generate_stars()
 		print(self)
@@ -36,7 +52,7 @@ class StarCat:
 		hashes = [x for x in range(0,self.max_hash)]
 		for hash in hashes:
 			ra = int(hash/(180/self.deltaDecl))
-			de = int((hash%max(ra,1))-(90/self.deltaDecl))
+			de = int((hash%int(180/self.deltaDecl))-(90/self.deltaDecl))
 			string += "QUADRANT {:05d} [({:03d},{:03d})->({:03d},{:03d})]:\n".format(hash,ra*self.deltaRA,de*self.deltaDecl,min((ra+1)*self.deltaRA,360),min((de+1)*self.deltaDecl,90))
 			if hash in self.stars:
 				for star in self.stars[hash]:
@@ -50,7 +66,6 @@ class StarCat:
 		bl = self.get_hash(Star(max(center[0]-radius,0),max(center[1]-radius,-90),0,0))
 		br = self.get_hash(Star(min(center[0]+radius,360),max(center[1]-radius,-90),0,0))
 		hashes = []
-		print(bl,br,tl,tr)
 		for i in range(bl,br+1,int(180/self.deltaDecl)):
 			for j in range(1+tl-bl):
 				hashes.append(i+j)
@@ -75,7 +90,7 @@ class StarCat:
 					ra = hrminsec2deg(ra_h,ra_min,ra_sec)
 					decl = de_sign*(de_deg+(de_min/60.0)+(de_sec/3600.0))
 					f.seek(12,1)
-					mag = float(f.read(4).decode())
+					mag = float(f.read(5).decode())
 					star = Star(ra,decl,name,mag)
 					hash = self.get_hash(star)
 					if hash in self.stars:
@@ -95,7 +110,6 @@ class StarCat:
 		ra_hash = int(star.ra/self.deltaRA)
 		decl_hash = int((star.decl+90)/self.deltaDecl)
 		return int(ra_hash*(180/self.deltaDecl) + decl_hash)
-
 
 
 def hrminsec2deg(hr,minute,sec):
